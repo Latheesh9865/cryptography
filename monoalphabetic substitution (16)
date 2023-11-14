@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+const char* ciphertext = "L qljsl rdltj!";
+const double english_frequencies[] = {
+    0.0817, 0.0149, 0.0271, 0.0432, 0.1202, 0.0230, 0.0203, 0.0597,
+    0.0675, 0.0015, 0.0077, 0.0403, 0.0241, 0.0675, 0.0751, 0.0193,
+    0.0009, 0.0599, 0.0633, 0.0906, 0.0276, 0.0098, 0.0236, 0.0015,
+    0.0197, 0.0007
+};
+
+
+double compute_score(const char* text) {
+    double frequencies[26] = {0.0};
+    int total_letters = 0;
+
+    for (int i = 0; text[i]; i++) {
+        if (isalpha(text[i])) {
+            char c = tolower(text[i]);
+            frequencies[c - 'a'] += 1.0;
+            total_letters++;
+        }
+    }
+
+    for (int i = 0; i < 26; i++) {
+        frequencies[i] /= total_letters;
+    }
+
+    double score = 0.0;
+    for (int i = 0; i < 26; i++) {
+        score += (frequencies[i] - english_frequencies[i]) * (frequencies[i] - english_frequencies[i]);
+    }
+
+    return score;
+}
+
+// Function to decrypt the ciphertext using a key
+void decrypt(int key) {
+    char plaintext[100];
+    int len = strlen(ciphertext);
+
+    for (int i = 0; i < len; i++) {
+        if (isalpha(ciphertext[i])) {
+            char base = isupper(ciphertext[i]) ? 'A' : 'a';
+            plaintext[i] = (ciphertext[i] - base - key + 26) % 26 + base;
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+
+    plaintext[len] = '\0';
+    double score = compute_score(plaintext);
+
+    printf("Key: %d, Score: %lf, Plaintext: %s\n", key, score, plaintext);
+}
+
+int main() {
+    printf("Ciphertext: %s\n", ciphertext);
+    printf("Possible plaintexts:\n");
+
+    for (int key = 0; key < 26; key++) {
+        decrypt(key);
+    }
+
+    return 0;
+}
