@@ -1,0 +1,77 @@
+#include <stdio.h>
+
+
+void circular_left_shift(unsigned char *subkey, int shift) {
+    unsigned char carry = 0;
+    int i;
+
+    for (i = 0; i < shift; i++) {
+        carry = (subkey[0] & 0x80) ? 1 : 0;
+
+        for (int j = 0; j < 6; j++) {
+            subkey[j] = (subkey[j] << 1) | ((subkey[j + 1] & 0x80) ? 1 : 0);
+        }
+
+        subkey[6] = (subkey[6] << 1) | carry;
+    }
+}
+
+int main() {
+    
+    unsigned char initial_key[8] = {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0};
+
+    // Apply initial permutation and get a 56-bit key
+    unsigned char key[7];
+    
+    // Implement the initial permutation (mapping 1-based to 0-based)
+    for (int i = 0; i < 56; i++) {
+        int bit = i;
+        int byte = bit / 8;
+        int bit_in_byte = 7 - (bit % 8);
+        key[byte] |= (initial_key[i / 8] & (1 << bit_in_byte)) ? (1 << bit_in_byte) : 0;
+    }
+
+    unsigned char left_half[7], right_half[7];
+    
+    // Split the 56-bit key into two 28-bit halves
+    for (int i = 0; i < 28; i++) {
+        left_half[i / 8] |= (key[i / 8] & (1 << (7 - (i % 8))));
+        right_half[i / 8] |= (key[(i + 28) / 8] & (1 << (7 - (i % 8))));
+    }
+
+    // Define the shift amounts for circular left shift
+    int shift_amounts[16] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
+
+    unsigned char subkeys[16][6];
+
+    // Generate the 16 subkeys
+    for (int round = 0; round < 16; round++) {
+        circular_left_shift(left_half, shift_amounts[round]);
+        circular_left_shift(right_half, shift_amounts[round]);
+
+        // Combine the two halves into a 56-bit key
+        for (int i = 0; i < 28; i++) {
+            key[i / 8] = left_half[i / 8];
+            key[(i + 28) / 8] = right_half[i / 8];
+        }
+
+        // Apply compression permutation to obtain a 48-bit subkey
+        for (int i = 0; i < 48; i++) {
+            int bit = i;
+            int byte = bit / 8;
+            int bit_in_byte = 7 - (bit % 8);
+            subkeys[round][byte] |= (key[byte] & (1 << bit_in_byte)) ? (1 << bit_in_byte) : 0;
+        }
+    }
+
+    // Print the subkeys
+    for (int round = 0; round < 16; round++) {
+        printf("Subkey %2d: 0x", round + 1);
+        for (int i = 0; i < 6; i++) {
+            printf("%02X", subkeys[round][i]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
