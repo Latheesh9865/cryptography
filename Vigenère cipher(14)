@@ -1,0 +1,58 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+
+std::string vigenere_encrypt(const std::string& plaintext, const std::vector<int>& key) {
+    std::string ciphertext = plaintext;
+    for (size_t i = 0; i < plaintext.length(); i++) {
+        if (isalpha(plaintext[i])) {
+            int shift = key[i % key.size()];
+            char base = (islower(plaintext[i])) ? 'a' : 'A';
+            ciphertext[i] = (plaintext[i] - base + shift) % 26 + base;
+        }
+    }
+    return ciphertext;
+}
+
+
+std::string vigenere_decrypt(const std::string& ciphertext, const std::vector<int>& key) {
+    std::string plaintext = ciphertext;
+    for (size_t i = 0; i < ciphertext.length(); i++) {
+        if (isalpha(ciphertext[i])) {
+            int shift = key[i % key.size()];
+            char base = (islower(ciphertext[i])) ? 'a' : 'A';
+            plaintext[i] = (ciphertext[i] - base - shift + 26) % 26 + base;
+        }
+    }
+    return plaintext;
+}
+
+int main() {
+    std::string plaintext;
+    std::vector<int> key;
+
+    
+    std::cout << "Enter plaintext: ";
+    std::cin >> plaintext;
+
+    
+    std::cout << "Enter key (space-separated integers): ";
+    int key_val;
+    while (std::cin >> key_val) {
+        key.push_back(key_val);
+    }
+
+    
+    std::string ciphertext = vigenere_encrypt(plaintext, key);
+
+    std::cout << "Part (a) - Encrypted Text: " << ciphertext << std::endl;
+
+    // Part b - Decrypt the ciphertext
+    std::string decrypted_text = vigenere_decrypt(ciphertext, key);
+
+    std::cout << "Part (b) - Decrypted Text: " << decrypted_text << std::endl;
+
+    return 0;
+}
+
